@@ -114,15 +114,24 @@ int main(void)
   MX_I2C1_Init();
   MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
+  uint8_t prezentacja=2;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  memset(audio_data, 0, sizeof(audio_data));
-  cs43l22_init(&hi2c1);
-  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
-  HAL_Delay(50);
-  g_wav_data_index = 0;
+  if (prezentacja==1){
+	  memset(audio_data, 0, sizeof(audio_data));
+	  cs43l22_init(&hi2c1);
+	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
+	  HAL_Delay(50);
+	  g_wav_data_index = 0;
+  }
+  if (prezentacja==2){
+	  HAL_Delay(500);
+	  createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
+	  HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
+	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
+  }
   while (1)
   {
     /* USER CODE END WHILE */

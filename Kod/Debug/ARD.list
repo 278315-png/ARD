@@ -740,8 +740,8 @@ int main(void)
   MX_SAI1_Init();
  800076a:	f000 f941 	bl	80009f0 <MX_SAI1_Init>
   /* USER CODE BEGIN 2 */
-  uint8_t prezentacja=2;
- 800076e:	2302      	movs	r3, #2
+  uint8_t prezentacja=1;
+ 800076e:	2301      	movs	r3, #1
  8000770:	71fb      	strb	r3, [r7, #7]
   /* USER CODE END 2 */
 
@@ -795,7 +795,6 @@ int main(void)
  80007ce:	490a      	ldr	r1, [pc, #40]	@ (80007f8 <main+0xb0>)
  80007d0:	480a      	ldr	r0, [pc, #40]	@ (80007fc <main+0xb4>)
  80007d2:	f001 f91d 	bl	8001a10 <HAL_DFSDM_FilterRegularStart_DMA>
-
   }
   while (1)
  80007d6:	bf00      	nop
