@@ -60,8 +60,8 @@ all: main-build
 main-build: ARD.elf secondary-outputs
 
 # Tool invocations
-ARD.elf ARD.map: $(OBJS) $(USER_OBJS) C:\Users\Michal\Desktop\git\ARD\Kod\STM32L476VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ARD.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Michal\Desktop\git\ARD\Kod\STM32L476VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ARD.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ARD.elf ARD.map: $(OBJS) $(USER_OBJS) C:\Users\xxkry\STM32CubeIDE\workspace_1.19.0\ARDrepo\Kod\STM32L476VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ARD.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\xxkry\STM32CubeIDE\workspace_1.19.0\ARDrepo\Kod\STM32L476VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ARD.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

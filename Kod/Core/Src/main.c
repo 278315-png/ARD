@@ -24,6 +24,7 @@
 #include <string.h>
 #include "c22.h"
 #include "wav_data_16bit.h"
+#include "audio_recorder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +114,6 @@ int main(void)
   MX_I2C1_Init();
   MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,7 +123,6 @@ int main(void)
   HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
   HAL_Delay(50);
   g_wav_data_index = 0;
-
   while (1)
   {
     /* USER CODE END WHILE */
@@ -336,7 +335,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
