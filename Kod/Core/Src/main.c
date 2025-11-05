@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "c22.h"
+#include "wav_data_16bit.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define BUFFER_SIZE 4096
+static int16_t audio_data[2 * BUFFER_SIZE];
+static volatile uint32_t g_wav_data_index = 0; //aktualna próbka
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -64,7 +67,9 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SAI1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai);
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai);
+static void Fill_Audio_Buffer(int16_t* buf, uint32_t n);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,6 +117,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  memset(audio_data, 0, sizeof(audio_data));
+  cs43l22_init(&hi2c1);
+  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
+  HAL_Delay(50);
+  g_wav_data_index = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -407,7 +417,35 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void Fill_Audio_Buffer(int16_t* buf, uint32_t n)
+{
+  for (uint32_t i = 0; i < n; i += 2)
+  {
+    if (g_wav_data_index >= wav_audio_data_16bit_size_samples)
+      g_wav_data_index = 0;
 
+    int16_t s = wav_audio_data_16bit[g_wav_data_index++];
+
+    buf[i]   = s;
+    buf[i+1] = s;
+  }
+}
+
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
+{
+  if (hsai->Instance == SAI1_Block_A)
+  {
+    Fill_Audio_Buffer(audio_data, BUFFER_SIZE);
+  }
+}
+
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+  if (hsai->Instance == SAI1_Block_A)
+  {
+    Fill_Audio_Buffer(audio_data + BUFFER_SIZE, BUFFER_SIZE);
+  }
+}
 /* USER CODE END 4 */
 
 /**
