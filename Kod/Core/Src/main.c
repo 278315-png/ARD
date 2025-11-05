@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "c22.h"
 #include "wav_data_16bit.h"
 /* USER CODE END Includes */
@@ -122,6 +123,7 @@ int main(void)
   HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
   HAL_Delay(50);
   g_wav_data_index = 0;
+
   while (1)
   {
     /* USER CODE END WHILE */
