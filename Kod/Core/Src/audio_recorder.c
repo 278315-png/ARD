@@ -8,11 +8,12 @@
 #include "audio_recorder.h"
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 int32_t recBuff[AUDIO_BUF];
 volatile uint32_t samplesSent = 0;
 int16_t audioChunk[AUDIO_BUF/2];
 uint8_t wavHeader[44];
-
+volatile uint8_t isRecordingActive = 0;
 
 void createWavHeader(uint8_t *header, uint32_t sampleRate, uint32_t dataSize)
 {
@@ -44,24 +45,58 @@ void createWavHeader(uint8_t *header, uint32_t sampleRate, uint32_t dataSize)
 
 void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h)
 {
-    for (int i = 0; i < AUDIO_BUF/2; i++)
-    	audioChunk[i] = (int16_t)(recBuff[i]);
+	uint64_t sum=0;
+	int16_t sample=0;
+	float rms=0;
+    for (int i = 0; i < AUDIO_BUF/2; i++){
+    	sample = (int16_t)(recBuff[i]);
+    	audioChunk[i] = sample;
+    	sum += (uint32_t) sample*sample;
+    }
+    rms = sqrtf(sum/(AUDIO_BUF/2));
+    if (!isRecordingActive && rms >= RMS_THRESHOLD){
+    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+    	isRecordingActive = 1;
+        createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
+        HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
+    }
 
-    HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
-    samplesSent += (AUDIO_BUF/2);
+    if (isRecordingActive) {
+		HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
+		samplesSent += (AUDIO_BUF/2);
 
-    if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS)
-    	HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
+		if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS){
+			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+			HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
+		}
+    }
 }
 
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h)
 {
-    for (int i = AUDIO_BUF/2; i < AUDIO_BUF; i++)
-    	audioChunk[i - AUDIO_BUF/2] = (int16_t)(recBuff[i]);
+	uint64_t sum=0;
+	int16_t sample=0;
+	float rms=0;
+    for (int i = AUDIO_BUF/2; i < AUDIO_BUF; i++){
+    	sample = (int16_t)(recBuff[i]);
+    	audioChunk[i - AUDIO_BUF/2] = sample;
+    	sum += (uint32_t) sample*sample;
+	}
+    rms = sqrtf(sum/(AUDIO_BUF/2));
+    if (!isRecordingActive && rms >= RMS_THRESHOLD){
+        HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+        isRecordingActive = 1;
+        createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
+        HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
+    }
 
-    HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
-    samplesSent += (AUDIO_BUF/2);
+    if (isRecordingActive){
+		HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
+		samplesSent += (AUDIO_BUF/2);
 
-    if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS)
-    	HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
+		if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS){
+			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+			HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
+		}
+    }
 }

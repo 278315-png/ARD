@@ -13,11 +13,11 @@
 
 #define AUDIO_BUF 			1024
 #define SAMPLE_RATE      	22050
-#define CHUNK_SECONDS		1
 #define TOTAL_SECONDS		10
 #define BYTES_PER_SAMPLE	2
-#define CHUNK_SAMPLES    	(SAMPLE_RATE * CHUNK_SECONDS)
 #define AUDIO_CHUNK_SIZE 	(CHUNK_SAMPLES * BYTES_PER_SAMPLE)
+#define RMS_THRESHOLD 		16000.0f
+
 extern UART_HandleTypeDef huart2;
 extern DFSDM_Filter_HandleTypeDef hdfsdm1_filter0;
 
@@ -25,6 +25,7 @@ extern int32_t recBuff[AUDIO_BUF];
 extern volatile uint32_t samplesSent;
 extern uint8_t wavHeader[44];
 extern int16_t audioChunk[AUDIO_BUF/2];
+extern volatile uint8_t isRecordingActive;
 
 
 

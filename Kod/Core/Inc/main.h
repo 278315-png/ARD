@@ -61,6 +61,8 @@ void Error_Handler(void);
 #define AUDIO_RST_GPIO_Port GPIOE
 #define MIC_DATA_Pin GPIO_PIN_7
 #define MIC_DATA_GPIO_Port GPIOE
+#define LED_GREEN_Pin GPIO_PIN_8
+#define LED_GREEN_GPIO_Port GPIOE
 #define MIC_CLKOUT_Pin GPIO_PIN_9
 #define MIC_CLKOUT_GPIO_Port GPIOE
 #define GPIO_Output_Pin GPIO_PIN_4

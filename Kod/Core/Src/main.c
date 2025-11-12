@@ -128,8 +128,6 @@ int main(void)
   }
   if (prezentacja==2){
 	  HAL_Delay(500);
-	  createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
-	  HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
 	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
   }
   while (1)
@@ -402,17 +400,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(AUDIO_RST_GPIO_Port, AUDIO_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, AUDIO_RST_Pin|LED_GREEN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIO_Output_GPIO_Port, GPIO_Output_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : AUDIO_RST_Pin */
-  GPIO_InitStruct.Pin = AUDIO_RST_Pin;
+  /*Configure GPIO pins : AUDIO_RST_Pin LED_GREEN_Pin */
+  GPIO_InitStruct.Pin = AUDIO_RST_Pin|LED_GREEN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(AUDIO_RST_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : GPIO_Output_Pin */
   GPIO_InitStruct.Pin = GPIO_Output_Pin;
