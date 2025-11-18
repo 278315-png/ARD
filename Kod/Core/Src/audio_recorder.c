@@ -15,28 +15,29 @@ int16_t audioChunk[AUDIO_BUF/2];
 uint8_t wavHeader[44];
 volatile uint8_t isRecordingActive = 0;
 
-void createWavHeader(uint8_t *header, uint32_t sampleRate, uint32_t dataSize)
+void createWavHeader(uint8_t *header, uint32_t sampleRate)
 {
 	memset(header, 0, 44);
-	uint32_t chunkSize= 36 + dataSize;
-	uint32_t subchunk1Size= 16;
+	uint32_t fmtChunkSize= 16;
 	uint16_t audioFormat= 1;
 	uint16_t numChannels= 1;
 	uint16_t bitsPerSample= 16;
 	uint32_t byteRate= sampleRate * numChannels * bitsPerSample / 8;
-	uint16_t blockAlign= numChannels * bitsPerSample / 8;
+	uint16_t sampleAlign= numChannels * bitsPerSample / 8;
+	uint32_t dataSize= sampleRate*TOTAL_SECONDS*numChannels*bitsPerSample/8;
+	uint32_t wavSize= 36 + dataSize;
 
 	memcpy(header + 0,"RIFF", 4);
-	memcpy(header + 4,&chunkSize, 4);
+	memcpy(header + 4,&wavSize, 4);
 	memcpy(header + 8,"WAVE", 4);
 
 	memcpy(header + 12,"fmt ", 4);
-	memcpy(header + 16,&subchunk1Size, 4);
+	memcpy(header + 16,&fmtChunkSize, 4);
 	memcpy(header + 20,&audioFormat, 2);
 	memcpy(header + 22,&numChannels, 2);
 	memcpy(header + 24,&sampleRate, 4);
 	memcpy(header + 28,&byteRate, 4);
-	memcpy(header + 32,&blockAlign, 2);
+	memcpy(header + 32,&sampleAlign, 2);
 	memcpy(header + 34,&bitsPerSample, 2);
 
 	memcpy(header + 36,"data", 4);
@@ -57,7 +58,7 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h)
     if (!isRecordingActive && rms >= RMS_THRESHOLD){
     	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     	isRecordingActive = 1;
-        createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
+        createWavHeader(wavHeader,SAMPLE_RATE);
         HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
     }
 
@@ -86,7 +87,7 @@ void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h)
     if (!isRecordingActive && rms >= RMS_THRESHOLD){
         HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
         isRecordingActive = 1;
-        createWavHeader(wavHeader,SAMPLE_RATE, SAMPLE_RATE * TOTAL_SECONDS * BYTES_PER_SAMPLE);
+        createWavHeader(wavHeader,SAMPLE_RATE);
         HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
     }
 

@@ -14,9 +14,7 @@
 #define AUDIO_BUF 			1024
 #define SAMPLE_RATE      	22050
 #define TOTAL_SECONDS		10
-#define BYTES_PER_SAMPLE	2
-#define AUDIO_CHUNK_SIZE 	(CHUNK_SAMPLES * BYTES_PER_SAMPLE)
-#define RMS_THRESHOLD 		16000.0f
+#define RMS_THRESHOLD 		10000.0f
 
 extern UART_HandleTypeDef huart2;
 extern DFSDM_Filter_HandleTypeDef hdfsdm1_filter0;
@@ -29,7 +27,7 @@ extern volatile uint8_t isRecordingActive;
 
 
 
-void createWavHeader(uint8_t *header, uint32_t sampleRate, uint32_t dataSize);
+void createWavHeader(uint8_t *header, uint32_t sampleRate);
 
 void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h);
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h);

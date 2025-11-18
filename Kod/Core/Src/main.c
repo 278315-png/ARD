@@ -127,7 +127,7 @@ int main(void)
 	  g_wav_data_index = 0;
   }
   if (prezentacja==2){
-	  HAL_Delay(500);
+	  HAL_Delay(1000);
 	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
   }
   while (1)
