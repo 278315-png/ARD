@@ -31,5 +31,6 @@ void createWavHeader(uint8_t *header, uint32_t sampleRate);
 
 void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h);
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h);
+void DFSDMCallbackHandler(uint8_t isBuffFull);
 
 #endif /* INC_AUDIO_RECORDER_H_ */

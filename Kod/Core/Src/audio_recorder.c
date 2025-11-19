@@ -46,15 +46,28 @@ void createWavHeader(uint8_t *header, uint32_t sampleRate)
 
 void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h)
 {
+	DFSDMCallbackHandler(0);
+}
+
+void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h)
+{
+	DFSDMCallbackHandler(1);
+}
+
+
+void DFSDMCallbackHandler(uint8_t isBuffFull){
 	uint64_t sum=0;
 	int16_t sample=0;
 	float rms=0;
+	uint32_t offset= AUDIO_BUF/2 * isBuffFull;
+
     for (int i = 0; i < AUDIO_BUF/2; i++){
-    	sample = (int16_t)(recBuff[i]);
+    	sample = (int16_t)(recBuff[i+offset]);
     	audioChunk[i] = sample;
-    	sum += (uint32_t) sample*sample;
+    	sum += (uint32_t) sample* (uint32_t) sample;
     }
     rms = sqrtf(sum/(AUDIO_BUF/2));
+
     if (!isRecordingActive && rms >= RMS_THRESHOLD){
     	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     	isRecordingActive = 1;
@@ -63,35 +76,6 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h)
     }
 
     if (isRecordingActive) {
-		HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
-		samplesSent += (AUDIO_BUF/2);
-
-		if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS){
-			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-			HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
-		}
-    }
-}
-
-void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h)
-{
-	uint64_t sum=0;
-	int16_t sample=0;
-	float rms=0;
-    for (int i = AUDIO_BUF/2; i < AUDIO_BUF; i++){
-    	sample = (int16_t)(recBuff[i]);
-    	audioChunk[i - AUDIO_BUF/2] = sample;
-    	sum += (uint32_t) sample*sample;
-	}
-    rms = sqrtf(sum/(AUDIO_BUF/2));
-    if (!isRecordingActive && rms >= RMS_THRESHOLD){
-        HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-        isRecordingActive = 1;
-        createWavHeader(wavHeader,SAMPLE_RATE);
-        HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
-    }
-
-    if (isRecordingActive){
 		HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
 		samplesSent += (AUDIO_BUF/2);
 
