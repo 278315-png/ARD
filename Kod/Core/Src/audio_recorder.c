@@ -9,9 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-int32_t recBuff[AUDIO_BUF];
+int32_t recBuff[AUDIO_BUF] = {0};
 volatile uint32_t samplesSent = 0;
-int16_t audioChunk[AUDIO_BUF/2];
+int16_t audioChunk[AUDIO_BUF/2] = {0};
 uint8_t wavHeader[44];
 volatile uint8_t isRecordingActive = 0;
 
