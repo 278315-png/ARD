@@ -65,8 +65,6 @@ void Error_Handler(void);
 #define LED_GREEN_GPIO_Port GPIOE
 #define MIC_CLKOUT_Pin GPIO_PIN_9
 #define MIC_CLKOUT_GPIO_Port GPIOE
-#define GPIO_Output_Pin GPIO_PIN_4
-#define GPIO_Output_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

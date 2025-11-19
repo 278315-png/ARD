@@ -1,0 +1,94 @@
+Configuration	ARD
+STM32CubeMX 	6.15.0
+Date	11/19/2025
+MCU	STM32L476VGTx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+DFSDM1:Channel 2	PDM/SPI input from ch2 and internal clock	DFSDM1_DATIN2	PE7
+DFSDM1:Channel 2	PDM/SPI input from ch2 and internal clock	DFSDM1_CKOUT	PE9
+DFSDM1	CKOUT	DFSDM1_CKOUT	PE9
+I2C1	I2C	I2C1_SCL	PB6
+I2C1	I2C	I2C1_SDA	PB7
+SAI1:SAI A	Master with Master Clock Out	SAI1_SD_A	PE6
+SAI1:SAI A	Master with Master Clock Out	SAI1_SCK_A	PE5
+SAI1:SAI A	Master with Master Clock Out	SAI1_FS_A	PE4
+SAI1:SAI A	Master with Master Clock Out	SAI1_MCLK_A	PE2
+SAI1:SAI A	Basic	SAI1_VP_$IpInstance_SAIA_SAI_BASIC	VP_SAI1_VP_$IpInstance_SAIA_SAI_BASIC
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+USART2	Asynchronous	USART2_RX	PD6
+USART2	Asynchronous	USART2_TX	PD5
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+1	PE2	SAI1_MCLK_A	
+2	PE3	GPIO_Output	AUDIO_RST
+3	PE4	SAI1_FS_A	
+4	PE5	SAI1_SCK_A	
+5	PE6	SAI1_SD_A	
+38	PE7	DFSDM1_DATIN2	MIC_DATA
+39	PE8	GPIO_Output	LED_GREEN
+40	PE9	DFSDM1_CKOUT	MIC_CLKOUT
+86	PD5	USART2_TX	
+87	PD6	USART2_RX	
+92	PB6	I2C1_SCL	
+93	PB7	I2C1_SDA	
+PERIPHERALS	MODES	FUNCTIONS	PINS
+DFSDM1:Channel 2	PDM/SPI input from ch2 and internal clock	DFSDM1_DATIN2	PE7
+DFSDM1:Channel 2	PDM/SPI input from ch2 and internal clock	DFSDM1_CKOUT	PE9
+DFSDM1	CKOUT	DFSDM1_CKOUT	PE9
+I2C1	I2C	I2C1_SCL	PB6
+I2C1	I2C	I2C1_SDA	PB7
+SAI1:SAI A	Master with Master Clock Out	SAI1_SD_A	PE6
+SAI1:SAI A	Master with Master Clock Out	SAI1_SCK_A	PE5
+SAI1:SAI A	Master with Master Clock Out	SAI1_FS_A	PE4
+SAI1:SAI A	Master with Master Clock Out	SAI1_MCLK_A	PE2
+SAI1:SAI A	Basic	SAI1_VP_$IpInstance_SAIA_SAI_BASIC	VP_SAI1_VP_$IpInstance_SAIA_SAI_BASIC
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+USART2	Asynchronous	USART2_RX	PD6
+USART2	Asynchronous	USART2_TX	PD5
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+1	PE2	SAI1_MCLK_A	
+2	PE3	GPIO_Output	AUDIO_RST
+3	PE4	SAI1_FS_A	
+4	PE5	SAI1_SCK_A	
+5	PE6	SAI1_SD_A	
+38	PE7	DFSDM1_DATIN2	MIC_DATA
+39	PE8	GPIO_Output	LED_GREEN
+40	PE9	DFSDM1_CKOUT	MIC_CLKOUT
+86	PD5	USART2_TX	
+87	PD6	USART2_RX	
+92	PB6	I2C1_SCL	
+93	PB7	I2C1_SDA	
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : ARD
+Project Folder : C:\Users\xxkry\STM32CubeIDE\workspace_1.19.0\ARDrepo\Kod
+Toolchain / IDE : STM32CubeIDE
+Firmware Package Name and Version : STM32Cube FW_L4 V1.18.1
+
+
+Code Generation Settings : 
+STM32Cube MCU packages and embedded software packs : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : No
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : 
+
+
+
+
+

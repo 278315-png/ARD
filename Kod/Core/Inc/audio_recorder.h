@@ -13,7 +13,7 @@
 
 #define AUDIO_BUF 			1024
 #define SAMPLE_RATE      	22050
-#define TOTAL_SECONDS		10
+#define TOTAL_SECONDS		30
 #define RMS_THRESHOLD 		10000.0f
 
 extern UART_HandleTypeDef huart2;
