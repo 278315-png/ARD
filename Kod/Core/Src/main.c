@@ -51,6 +51,9 @@ DMA_HandleTypeDef hdma_dfsdm1_flt0;
 
 I2C_HandleTypeDef hi2c1;
 
+QSPI_HandleTypeDef hqspi;
+DMA_HandleTypeDef hdma_quadspi;
+
 SAI_HandleTypeDef hsai_BlockA1;
 DMA_HandleTypeDef hdma_sai1_a;
 
@@ -68,6 +71,7 @@ static void MX_DFSDM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SAI1_Init(void);
+static void MX_QUADSPI_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai);
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai);
@@ -113,26 +117,42 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_SAI1_Init();
+  MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t prezentacja=2;
+  uint8_t prezentacja=3;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  if (prezentacja==1){
-	  memset(audio_data, 0, sizeof(audio_data));
-	  cs43l22_init(&hi2c1);
-	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
-	  HAL_Delay(50);
-	  g_wav_data_index = 0;
-  }
-  if (prezentacja==2){
-	  memset(recBuff,0,sizeof(recBuff));
-	  HAL_Delay(1000);
-	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
-  }
+
+  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
   while (1)
   {
+
+	  if(HAL_GPIO_ReadPin(JOY_UP_GPIO_Port, JOY_UP_Pin)==GPIO_PIN_SET)
+	  	  prezentacja=1;
+
+	    if(HAL_GPIO_ReadPin(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin)==GPIO_PIN_SET)
+	  	  prezentacja=2;
+
+	    if (prezentacja==1){
+
+	    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+	    	HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
+	  	  memset(audio_data, 0, sizeof(audio_data));
+	  	  cs43l22_init(&hi2c1);
+	  	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
+	  	  HAL_Delay(50);
+	  	  g_wav_data_index = 0;
+	    }
+	    if (prezentacja==2){
+	    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+	    	HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
+	  	  memset(recBuff,0,sizeof(recBuff));
+	  	  HAL_Delay(1000);
+	  	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
+	    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -159,16 +179,17 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 2;
-  RCC_OscInitStruct.PLL.PLLN = 10;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 40;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -291,6 +312,39 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief QUADSPI Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_QUADSPI_Init(void)
+{
+
+  /* USER CODE BEGIN QUADSPI_Init 0 */
+
+  /* USER CODE END QUADSPI_Init 0 */
+
+  /* USER CODE BEGIN QUADSPI_Init 1 */
+
+  /* USER CODE END QUADSPI_Init 1 */
+  /* QUADSPI parameter configuration*/
+  hqspi.Instance = QUADSPI;
+  hqspi.Init.ClockPrescaler = 1;
+  hqspi.Init.FifoThreshold = 4;
+  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+  hqspi.Init.FlashSize = 23;
+  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
+  if (HAL_QSPI_Init(&hqspi) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN QUADSPI_Init 2 */
+
+  /* USER CODE END QUADSPI_Init 2 */
+
+}
+
+/**
   * @brief SAI1 Initialization Function
   * @param None
   * @retval None
@@ -375,6 +429,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
   /* DMA2_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Channel1_IRQn);
@@ -395,11 +452,19 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, AUDIO_RST_Pin|LED_GREEN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIO_Output_GPIO_Port, GPIO_Output_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : AUDIO_RST_Pin LED_GREEN_Pin */
   GPIO_InitStruct.Pin = AUDIO_RST_Pin|LED_GREEN_Pin;
@@ -407,6 +472,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : JOY_UP_Pin JOY_DOWN_Pin */
+  GPIO_InitStruct.Pin = JOY_UP_Pin|JOY_DOWN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LED_REED_Pin */
+  GPIO_InitStruct.Pin = LED_REED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_REED_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : GPIO_Output_Pin */
+  GPIO_InitStruct.Pin = GPIO_Output_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIO_Output_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
