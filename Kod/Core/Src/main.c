@@ -120,7 +120,7 @@ int main(void)
   MX_SAI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t prezentacja=0;
+  uint8_t workMode=0;
   AudioRecorderInit();
   /* USER CODE END 2 */
 
@@ -130,28 +130,36 @@ int main(void)
   {
 
 	  if(HAL_GPIO_ReadPin(JOY_UP_GPIO_Port, JOY_UP_Pin)==GPIO_PIN_SET)
-	  	  prezentacja=1;
+	  	  workMode=1;
 
-	    if(HAL_GPIO_ReadPin(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin)==GPIO_PIN_SET)
-	  	  prezentacja=2;
+	  if(HAL_GPIO_ReadPin(JOY_DOWN_GPIO_Port, JOY_DOWN_Pin)==GPIO_PIN_SET)
+		  workMode=2;
 
-	    if (prezentacja==1){
+	  if (workMode==1){
 
-	    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-	    	HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
-	  	  memset(audio_data, 0, sizeof(audio_data));
-	  	  cs43l22_init(&hi2c1);
+		  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
+		  memset(audio_data, 0, sizeof(audio_data));
+		  cs43l22_init(&hi2c1);
 	  	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
 	  	  HAL_Delay(50);
 	  	  g_wav_data_index = 0;
+	  	  workMode=0;
 	    }
-	    if (prezentacja==2){
-	    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-	    	HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
+	  if (workMode==2){
+		  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
 	  	  memset(recBuff,0,sizeof(recBuff));
 	  	  HAL_Delay(1000);
 	  	  HAL_DFSDM_FilterRegularStart_DMA(&hdfsdm1_filter0, (int32_t *)recBuff, AUDIO_BUF);
+	  	  workMode=3;
 	    }
+	  if (workMode==3){
+		  if (recordingDone){
+			  QSPItoUART();
+			  workMode=0;
+		  }
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -16,7 +16,8 @@ volatile uint32_t samplesSent = 0;
 int16_t audioChunk[AUDIO_BUF/2] = {0};
 uint8_t wavHeader[44];
 volatile uint8_t isRecordingActive = 0;
-static uint32_t flashWriteAddress = 0;
+uint32_t flashWriteAddress = 0;
+volatile uint8_t recordingDone = 0;
 
 void AudioRecorderInit()
 {
@@ -29,6 +30,7 @@ void AudioRecorderInit()
 	 }
 	 HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
 	 flashWriteAddress = 0;
+	 recordingDone = 0;
 }
 
 void createWavHeader(uint8_t *header, uint32_t sampleRate)
@@ -105,6 +107,33 @@ void DFSDMCallbackHandler(uint8_t isBuffFull){
 		if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS){
 			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
 			HAL_DFSDM_FilterRegularStop_DMA(&hdfsdm1_filter0);
+			recordingDone=1;
 		}
     }
+}
+void QSPItoUART(){
+	uint32_t dataSize=SAMPLE_RATE*TOTAL_SECONDS*2;
+	uint32_t currentAddress=0;
+	uint32_t totalSize=44+dataSize;
+	uint32_t blockBytes=4096;
+	uint8_t buffer[4096];
+	uint32_t bytesLeft=0;
+	while (currentAddress<totalSize){
+		bytesLeft=totalSize-currentAddress;
+		if (bytesLeft<blockBytes) {
+			blockBytes=bytesLeft;
+		}
+		if (BSP_QSPI_Read(buffer, currentAddress, blockBytes)!=QSPI_OK){
+			while(1){
+				HAL_GPIO_TogglePin(LED_REED_GPIO_Port, LED_REED_Pin);
+				HAL_Delay(100);
+			}
+		}
+		HAL_UART_Transmit(&huart2, buffer, blockBytes, HAL_MAX_DELAY);
+		currentAddress+=blockBytes;
+		if ((currentAddress%65536)==0){
+			HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+		}
+	}
+
 }

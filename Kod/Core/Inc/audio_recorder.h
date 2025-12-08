@@ -24,12 +24,12 @@ extern volatile uint32_t samplesSent;
 extern uint8_t wavHeader[44];
 extern int16_t audioChunk[AUDIO_BUF/2];
 extern volatile uint8_t isRecordingActive;
-
-
+extern volatile uint8_t recordingDone;
+extern uint32_t flashWriteAddress;
 
 void createWavHeader(uint8_t *header, uint32_t sampleRate);
 void AudioRecorderInit();
-
+void QSPItoUART();
 void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *h);
 void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *h);
 void DFSDMCallbackHandler(uint8_t isBuffFull);
