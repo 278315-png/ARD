@@ -11,6 +11,11 @@ void cs43l22_init(I2C_HandleTypeDef *hi2c)
 	cs43l22_write(hi2c,0x06, 0x07);
 	cs43l22_write(hi2c,0x02, 0x9e);
 }
+void cs43l22_power_down(I2C_HandleTypeDef *hi2c)
+{
+    cs43l22_write(hi2c, 0x02, 0x01);
+    HAL_GPIO_WritePin(AUDIO_RST_GPIO_Port, AUDIO_RST_Pin, GPIO_PIN_RESET);
+}
 
 
 

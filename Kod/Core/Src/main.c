@@ -38,6 +38,10 @@
 #define BUFFER_SIZE 4096
 static int16_t audio_data[2 * BUFFER_SIZE];
 static volatile uint32_t g_wav_data_index = 0; //aktualna próbka
+
+
+static volatile uint32_t g_qspi_read_address = 0;
+static volatile uint32_t g_max_audio_size_bytes = 0;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,7 +65,7 @@ DMA_HandleTypeDef hdma_sai1_a;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+volatile uint8_t workMode = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +81,7 @@ static void MX_QUADSPI_Init(void);
 void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai);
 void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai);
 static void Fill_Audio_Buffer(int16_t* buf, uint32_t n);
+static void Fill_Audio_Buffer_From_QSPI(int16_t* buf, uint32_t n);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -120,7 +125,7 @@ int main(void)
   MX_SAI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t workMode=0;
+
   AudioRecorderInit();
   /* USER CODE END 2 */
 
@@ -136,16 +141,25 @@ int main(void)
 		  workMode=2;
 
 	  if (workMode==1){
+	            if (g_max_audio_size_bytes == 0) {
+	                HAL_Delay(100);
+	                workMode = 0;
+	                continue;
+	            }
 
-		  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-		  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
-		  memset(audio_data, 0, sizeof(audio_data));
-		  cs43l22_init(&hi2c1);
-	  	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
-	  	  HAL_Delay(50);
-	  	  g_wav_data_index = 0;
-	  	  workMode=0;
-	    }
+	  		  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+	  		  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_RESET);
+
+	  		  memset(audio_data, 0, sizeof(audio_data));
+	  		  cs43l22_init(&hi2c1);
+	            g_qspi_read_address = 44;
+	            Fill_Audio_Buffer_From_QSPI(audio_data, BUFFER_SIZE);
+	            Fill_Audio_Buffer_From_QSPI(audio_data + BUFFER_SIZE, BUFFER_SIZE);
+
+	  	  	  HAL_SAI_Transmit_DMA(&hsai_BlockA1, (uint8_t*)audio_data, 2 * BUFFER_SIZE);
+
+	  	  	  workMode=4;
+	  	    }
 	  if (workMode==2){
 		  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
@@ -156,10 +170,15 @@ int main(void)
 	    }
 	  if (workMode==3){
 		  if (recordingDone){
-			  QSPItoUART();
+			  g_max_audio_size_bytes = (uint32_t)SAMPLE_RATE * TOTAL_SECONDS * 2;
+			//  QSPItoUART();
 			  workMode=0;
 		  }
 	  }
+	  if (workMode == 4) {
+	  	        HAL_GPIO_TogglePin(LED_REED_GPIO_Port, LED_REED_Pin);
+	  	        HAL_Delay(100);
+	  	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -506,6 +525,68 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+static void Fill_Audio_Buffer_From_QSPI(int16_t* buf, uint32_t n)
+{
+    uint32_t qspi_elements_to_read = n / 2;
+    uint32_t qspi_bytes_to_read = qspi_elements_to_read * sizeof(int16_t);
+
+    uint32_t audio_offset = g_qspi_read_address - 44;
+    uint32_t bytes_left = (audio_offset < g_max_audio_size_bytes) ? (g_max_audio_size_bytes - audio_offset) : 0;
+
+    if (bytes_left == 0) {
+            HAL_SAI_DMAStop(&hsai_BlockA1);
+            memset(buf, 0, n * sizeof(int16_t));
+            HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+            cs43l22_power_down(&hi2c1);
+            workMode = 0;
+            return;
+        }
+
+    if (qspi_bytes_to_read > bytes_left) {
+        qspi_bytes_to_read = bytes_left;
+        qspi_elements_to_read = qspi_bytes_to_read / sizeof(int16_t);
+    }
+
+    int16_t qspi_temp_buffer[qspi_elements_to_read];
+
+    if (BSP_QSPI_Read((uint8_t*)qspi_temp_buffer, g_qspi_read_address, qspi_bytes_to_read) != QSPI_OK) {
+        Error_Handler();
+    }
+
+    g_qspi_read_address += qspi_bytes_to_read;
+
+    for (uint32_t i = 0; i < qspi_elements_to_read; i++)
+    {
+        int16_t sample = qspi_temp_buffer[i];
+
+        buf[2*i] = sample;
+
+        buf[2*i + 1] = sample;
+    }
+
+    if (qspi_elements_to_read < n / 2) {
+        memset(buf + 2 * qspi_elements_to_read, 0, (n - 2 * qspi_elements_to_read) * sizeof(int16_t));
+    }
+}
+
+
+void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
+{
+  if (hsai->Instance == SAI1_Block_A)
+  {
+    Fill_Audio_Buffer_From_QSPI(audio_data, BUFFER_SIZE);
+  }
+}
+
+void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+  if (hsai->Instance == SAI1_Block_A)
+  {
+    Fill_Audio_Buffer_From_QSPI(audio_data + BUFFER_SIZE, BUFFER_SIZE);
+  }
+}
+
 static void Fill_Audio_Buffer(int16_t* buf, uint32_t n)
 {
   for (uint32_t i = 0; i < n; i += 2)
@@ -520,21 +601,21 @@ static void Fill_Audio_Buffer(int16_t* buf, uint32_t n)
   }
 }
 
-void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
-{
-  if (hsai->Instance == SAI1_Block_A)
-  {
-    Fill_Audio_Buffer(audio_data, BUFFER_SIZE);
-  }
-}
-
-void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
-{
-  if (hsai->Instance == SAI1_Block_A)
-  {
-    Fill_Audio_Buffer(audio_data + BUFFER_SIZE, BUFFER_SIZE);
-  }
-}
+//void HAL_SAI_TxHalfCpltCallback(SAI_HandleTypeDef *hsai)
+//{
+//  if (hsai->Instance == SAI1_Block_A)
+//  {
+//    Fill_Audio_Buffer(audio_data, BUFFER_SIZE);
+//  }
+//}
+//
+//void HAL_SAI_TxCpltCallback(SAI_HandleTypeDef *hsai)
+//{
+//  if (hsai->Instance == SAI1_Block_A)
+//  {
+//    Fill_Audio_Buffer(audio_data + BUFFER_SIZE, BUFFER_SIZE);
+//  }
+//}
 /* USER CODE END 4 */
 
 /**

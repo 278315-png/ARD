@@ -295,4 +295,3 @@ VP_SAI1_VP_$IpInstance_SAIA_SAI_BASIC.Signal=SAI1_VP_$IpInstance_SAIA_SAI_BASIC
 VP_SYS_VS_Systick.Mode=SysTick
 VP_SYS_VS_Systick.Signal=SYS_VS_Systick
 board=custom
-isbadioc=false
