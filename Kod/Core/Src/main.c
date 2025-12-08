@@ -25,6 +25,7 @@
 #include "c22.h"
 #include "wav_data_16bit.h"
 #include "audio_recorder.h"
+#include "stm32l476g_discovery_qspi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,14 +120,12 @@ int main(void)
   MX_SAI1_Init();
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t prezentacja=3;
+  uint8_t prezentacja=0;
+  AudioRecorderInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
   while (1)
   {
 
@@ -328,7 +327,7 @@ static void MX_QUADSPI_Init(void)
   /* USER CODE END QUADSPI_Init 1 */
   /* QUADSPI parameter configuration*/
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 1;
+  hqspi.Init.ClockPrescaler = 0;
   hqspi.Init.FifoThreshold = 4;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = 23;

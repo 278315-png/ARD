@@ -9,11 +9,27 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include "stm32l476g_discovery_qspi.h"
+
 int32_t recBuff[AUDIO_BUF] = {0};
 volatile uint32_t samplesSent = 0;
 int16_t audioChunk[AUDIO_BUF/2] = {0};
 uint8_t wavHeader[44];
 volatile uint8_t isRecordingActive = 0;
+static uint32_t flashWriteAddress = 0;
+
+void AudioRecorderInit()
+{
+	HAL_GPIO_WritePin(LED_REED_GPIO_Port, LED_REED_Pin, GPIO_PIN_SET);
+	if (BSP_QSPI_Init() != QSPI_OK ){
+		  Error_Handler();
+	  }
+	 if (BSP_QSPI_Erase_Chip() != QSPI_OK){
+		  Error_Handler();
+	 }
+	 HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+	 flashWriteAddress = 0;
+}
 
 void createWavHeader(uint8_t *header, uint32_t sampleRate)
 {
@@ -72,12 +88,19 @@ void DFSDMCallbackHandler(uint8_t isBuffFull){
     	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
     	isRecordingActive = 1;
         createWavHeader(wavHeader,SAMPLE_RATE);
-        HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
+        //HAL_UART_Transmit(&huart2, wavHeader, 44, HAL_MAX_DELAY);
+        if (BSP_QSPI_Write(wavHeader, flashWriteAddress, 44)== QSPI_OK){
+        	flashWriteAddress+=44;
+        }
     }
 
     if (isRecordingActive) {
-		HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
-		samplesSent += (AUDIO_BUF/2);
+		//HAL_UART_Transmit(&huart2, (uint8_t*)audioChunk, AUDIO_BUF, HAL_MAX_DELAY);
+    	if (BSP_QSPI_Write((uint8_t*)audioChunk,flashWriteAddress,AUDIO_BUF)==QSPI_OK){
+    		flashWriteAddress += AUDIO_BUF;
+    		samplesSent += (AUDIO_BUF/2);
+
+    	}
 
 		if (samplesSent >= SAMPLE_RATE * TOTAL_SECONDS){
 			HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
