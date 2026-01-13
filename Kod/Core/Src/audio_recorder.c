@@ -1,6 +1,5 @@
 /*
  * audio_recorder.c
- *
  *  Created on: Nov 5, 2025
  *      Author: 278315
  */
