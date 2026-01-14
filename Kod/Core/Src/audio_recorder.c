@@ -80,8 +80,10 @@ void DFSDMCallbackHandler(uint8_t isBuffFull){
 
     for (int i = 0; i < AUDIO_BUF/2; i++){
     	sample = (int16_t)(recBuff[i+offset]);
+    	sample = sample >> 1;
     	audioChunk[i] = sample;
-    	sum += (uint32_t) sample* (uint32_t) sample;
+    	int32_t s=sample;
+    	sum += (uint64_t)(s*s);
     }
     rms = sqrtf(sum/(AUDIO_BUF/2));
 
